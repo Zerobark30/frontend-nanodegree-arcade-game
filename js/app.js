@@ -1,9 +1,19 @@
 //Global variable for the enemy start x coordinate
 var enemyXStart = -140;
 
+//Global variable that toggles on/off if the player wins
+var gameWon = false;
+
+//Global variable for the level of the game
+var gameLevel = 0;
+
 //Global variables for the player start coordinates
 var playerXStart = 200;
 var playerYStart = 400;
+
+//Global variables for enemy area border y coordinates
+var enemyAreaTop = 25;
+var enemyAreaBottom = 250;
 
 // Enemies our player must avoid
 var Enemy = function(x,y) {
@@ -34,6 +44,10 @@ Enemy.prototype.update = function(dt) {
     //the screen by the rate * dt * this.speed factor;
     //put the enemy back at the starting position with a 
     //new speed factor if it's reached the end of the screen
+    if (gameWon === true) {
+        allEnemies = [];
+        //TODO spawn more enemies
+    }
     if (this.x >= enemyFinish) {
         this.x = enemyXStart;
         this.speed = Math.random();
@@ -76,6 +90,8 @@ player.prototype.update = function() {
     if (this.y <= winner) {
         this.x = playerXStart;
         this.y = playerYStart;
+        gameWon = true;
+        gameLevel ++;
     //If the player is not at the winning y coordinate, check
     //if the player is at one of the borders and do not let 
     //it move beyond them
@@ -85,8 +101,9 @@ player.prototype.update = function() {
         this.x = rightBorder;
     } else if (this.y > bottomBorder) {
         this.y = bottomBorder;
+    } else {
+        gameWon = false;
     };
-    
     //Collision detection; if the player is within one of the
     //specified ranges of one of the enemies, set the player
     //x and y coordinates to the starting position
