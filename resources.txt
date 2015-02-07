@@ -1,0 +1,3 @@
+
+Used to add enemies to allEnemies with a for loop:
+http://stackoverflow.com/questions/8260156/how-do-i-create-dynamic-variable-names-inside-a-loop
