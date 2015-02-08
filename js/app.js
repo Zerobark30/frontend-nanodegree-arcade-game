@@ -5,7 +5,10 @@ var enemyXStart = -140;
 var gameWon = false;
 
 //Global variable for the level of the game
-var gameLevel = 0;
+var gameLevel = 1;
+
+//Global variable for number of lives the player has
+var gameLives = 5;
 
 //Global variables for the player start coordinates
 var playerXStart = 200;
@@ -40,26 +43,28 @@ Enemy.prototype.update = function(dt) {
     //enemy should start back at the left side of the screen
     var enemyFinish = 500;
 
+    //check to see if gameWon is true or gameLevel is below
+    //zero. If so, respawn more enemies by a factor of the new level
+    if (gameWon === true || gameLevel < 0) {
+        allEnemies = [];
+        Enemies.spawn(gameLevel * 5);
+    };
     //update the canvas to put the enemy further across
     //the screen by the rate * dt * this.speed factor;
     //put the enemy back at the starting position with a 
     //new speed factor if it's reached the end of the screen
-    if (gameWon === true) {
-        allEnemies = [];
-        //TODO spawn more enemies
-    }
     if (this.x >= enemyFinish) {
         this.x = enemyXStart;
         this.speed = Math.random();
     } else {
-        this.x = this.x + (rate * dt * this.speed);
+        this.x += (rate * dt * this.speed);
     };
 };
 
 // Draw the enemy on the screen, required method for game
 Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-}
+};
 
 //The function for our hero 
 var player = function() {
@@ -92,6 +97,12 @@ player.prototype.update = function() {
         this.y = playerYStart;
         gameWon = true;
         gameLevel ++;
+    //If the game is not a winner, check if the player has fewer 
+    //than 0 lives. If so, set the player to start, set level to 1 
+    } else if (gameLives < 0) {
+        gameLevel = 1;
+        this.x = playerYStart;
+        this.y = playerYStart;
     //If the player is not at the winning y coordinate, check
     //if the player is at one of the borders and do not let 
     //it move beyond them
@@ -110,10 +121,11 @@ player.prototype.update = function() {
     for (i = 0; i < allEnemies.length; i++) {
         if (player.x > allEnemies[i].x - bugBodyDistance && 
             player.x < allEnemies[i].x + bugBodyDistance &&
-             player.y > allEnemies[i].y - enemyDistance &&
-             player.y < allEnemies[i].y + enemyDistance) {
+            player.y > allEnemies[i].y - enemyDistance &&
+            player.y < allEnemies[i].y + enemyDistance) {
             player.x = playerXStart;
             player.y = playerYStart;
+            gameLives -= 1;
         };
     };
 };
@@ -153,9 +165,9 @@ var Enemies = {
     //enemies to appear in the game; TODO allow for 
     ///easy, medium or hard selection
     "level": {
-        "easy": 5,
-        "medium": 10,
-        "hard": 20
+        "Easy": 5,
+        "Medium": 10,
+        "Hard": 20
     },
     //rows object contains values for y coordinates of 
     //enemies to start at
@@ -188,7 +200,7 @@ Enemies.spawn = function(num) {
 };
 
 //Call the enemies.spawn function to populate the allEnemies array
-Enemies.spawn(Enemies.level.easy);
+Enemies.spawn(gameLevel * 5);
 
 //Place the player object in a variable called player
 var player = new player();
@@ -205,3 +217,21 @@ document.addEventListener('keyup', function(e) {
 
     player.handleInput(allowedKeys[e.keyCode]);
 });
+
+//Create HUD object, this contains the text to display
+//on screen showing game data
+var headsUpDisplay = {
+    "Lives":"Remaning lives: ",
+    "Points":"Score: ",
+    "Level":"Level: "
+};
+
+headsUpDisplay.render = function() {
+    ctx.fillText(headsUpDisplay.Lives + gameLives, 325, 80);
+    ctx.font = "bold 20px Quicksand";
+    ctx.fillStyle = "yellow";
+    ctx.fillText(headsUpDisplay.Level + gameLevel, 5, 80);
+    ctx.font = "bold 20px Quicksand";
+    ctx.fillStyle = "yellow";
+};
+
