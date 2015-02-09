@@ -37,9 +37,15 @@ Enemy.prototype.update = function(dt) {
 
     //check to see if gameWon is true or gameLevel is below
     //zero. If so, respawn more enemies by a factor of the new level
-    if (gameData.gameWon === true || gameData.gameLevel < 0) {
+    if (gameData.gameWon === true) {
         allEnemies = [];
         gameData.spawn(gameData.gameLevel * 5);
+    };
+    if (gameData.gameLives < 0) {
+        allEnemies = [];
+        gameData.gameLevel = 1;
+        gameData.spawn(gameData.gameLevel * 5);
+        gameData.gameLives = 5;
     };
     //update the canvas to put the enemy further across
     //the screen by the rate * dt * this.speed factor;
