@@ -6,13 +6,12 @@ var gameData = {
         "row1": 50,
         "row2": 140,
         "row3": 220
-    }
+    },
+    "enemyXStart":-140
 };
 
 // Enemies our player must avoid
 var Enemy = function(x,y) {
-    //Variable for the enemy start x coordinate
-    var enemyXStart = -140;
     //set the x and y coordinates equal to the supplied numbers
     this.x = x;
     this.y = y;
@@ -40,14 +39,14 @@ Enemy.prototype.update = function(dt) {
     //zero. If so, respawn more enemies by a factor of the new level
     if (gameData.gameWon === true || gameData.gameLevel < 0) {
         allEnemies = [];
-        Enemies.spawn(gameData.gameLevel * 5);
+        gameData.spawn(gameData.gameLevel * 5);
     };
     //update the canvas to put the enemy further across
     //the screen by the rate * dt * this.speed factor;
     //put the enemy back at the starting position with a 
     //new speed factor if it's reached the end of the screen
     if (this.x >= enemyFinish) {
-        this.x = enemyXStart;
+        this.x = gameData.enemyXStart;
         this.speed = Math.random();
     } else {
         this.x += (rate * dt * this.speed);
@@ -62,12 +61,12 @@ Enemy.prototype.render = function() {
 //The function for our hero 
 var player = function() {
     //Player start coordinates
-    var playerXStart = 200;
-    var playerYStart = 400;
-    
+    this.playerXStart = 200;
+    this.playerYStart = 400;
+
     //Set the starting x and y coordinates
-    this.x = playerXStart;
-    this.y = playerYStart;
+    this.x = this.playerXStart;
+    this.y = this.playerYStart;
 
     //set the image to be used for player
     this.sprite = 'images/char-boy.png';
@@ -90,16 +89,16 @@ player.prototype.update = function() {
     //if the player is at the winning y coordinate, move it back
     //to the start TODO other winning events
     if (this.y <= winner) {
-        this.x = playerXStart;
-        this.y = playerYStart;
+        this.x = player.playerXStart;
+        this.y = player.playerYStart;
         gameData.gameWon = true;
         gameData.gameLevel ++;
     //If the game is not a winner, check if the player has fewer 
     //than 0 lives. If so, set the player to start, set level to 1 
     } else if (gameData.gameLives < 0) {
         gameData.gameLevel = 1;
-        this.x = playerYStart;
-        this.y = playerYStart;
+        this.x = player.playerXStart;
+        this.y = player.playerYStart;
     //If the player is not at the winning y coordinate, check
     //if the player is at one of the borders and do not let 
     //it move beyond them
@@ -120,8 +119,8 @@ player.prototype.update = function() {
             player.x < allEnemies[i].x + bugBodyDistance &&
             player.y > allEnemies[i].y - enemyDistance &&
             player.y < allEnemies[i].y + enemyDistance) {
-            player.x = playerXStart;
-            player.y = playerYStart;
+            player.x = player.playerXStart;
+            player.y = player.playerYStart;
             gameData.gameLives -= 1;
         };
     };
@@ -161,27 +160,27 @@ var Enemies = {};
 
 //Spanw function adds enemies to allEnemies array in
 //an amount corresponding to the number supplied
-Enemies.spawn = function(num) { 
+gameData.spawn = function(num) { 
     for (i = 0;i < num; i++) {
         //Sets the starting coordinates for the enemy, with y values
         //coresponding to the Enemies.rows object, based upon the
         //divisibility of the index
         switch (i % 3) {
             case 0:
-                allEnemies[i] = new Enemy(enemyXStart, gameData.rows.row1);
+                allEnemies[i] = new Enemy(gameData.enemyXStart, gameData.rows.row1);
                 break;
             case 1:
-                allEnemies[i] = new Enemy(enemyXStart, gameData.rows.row2);
+                allEnemies[i] = new Enemy(gameData.enemyXStart, gameData.rows.row2);
                 break;
             case 2:
-                allEnemies[i] = new Enemy(enemyXStart, gameData.rows.row3);
+                allEnemies[i] = new Enemy(gameData.enemyXStart, gameData.rows.row3);
                 break;
         }; 
     };
 };
 
 //Call the enemies.spawn function to populate the allEnemies array
-Enemies.spawn(gameData.gameLevel * 5);
+gameData.spawn(gameData.gameLevel * 5);
 
 //Place the player object in a variable called player
 var player = new player();
