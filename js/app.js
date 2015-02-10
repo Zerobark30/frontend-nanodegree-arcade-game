@@ -1,3 +1,4 @@
+//Create object to store all of the data relevant to the game as a whole
 var gameData = {
     "gameLevel":1,
     "gameLives":5,
@@ -7,113 +8,134 @@ var gameData = {
         "row2": 140,
         "row3": 220
     },
-    "enemyXStart":-140
+    "enemyXStart":-140,
 };
 
-// Enemies our player must avoid
-var Enemy = function(x,y) {
-    //set the x and y coordinates equal to the supplied numbers
+// Create Character class
+var Character = function(x,y) {
     this.x = x;
     this.y = y;
+
+    // Player level
+    this.level = 1;
+
+    //Player lives
+    this.lives = 5;
+};
+
+//Add render prototype for characters
+Character.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+// Create Enemy sub-class of Character
+var Enemy = function(x,y) {
+    Character.call(this,x,y);
     
-    //Create an initial speed multiplier for the enemy bug
+    // Random speed multiplier for the enemy bug
     this.speed = Math.random();
     
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
+    // The image/sprite for our enemies
     this.sprite = 'images/enemy-bug.png';
-}
+
+    // Base speed rate for enemies
+    this.rate = 250;
+
+    //X coordinate at which the enemy re-spanws
+    this.enemyFinish = 500;
+};
+
+//Add constructor function and deligate to Character.prototype
+Enemy.prototype = Object.create(Character.prototype);
+Enemy.prototype.constructor = Enemy;
 
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
-    //set the base rate at which all bugs move across
-    //the screen
-    var rate = 250;
-
-    //set the variable for x coordinate at which the 
-    //enemy should start back at the left side of the screen
-    var enemyFinish = 500;
-
     //check to see if gameWon is true or gameLevel is below
     //zero. If so, respawn more enemies by a factor of the new level
     if (gameData.gameWon === true) {
         allEnemies = [];
-        gameData.spawn(gameData.gameLevel * 5);
+        enemy.spawn(this.level * 5);
     };
-    if (gameData.gameLives < 0) {
+    if (this.lives < 0) {
         allEnemies = [];
-        gameData.gameLevel = 1;
-        gameData.spawn(gameData.gameLevel * 5);
-        gameData.gameLives = 5;
+        this.level = 1;
+        enemy.spawn(this.level * 5);
+        this.lives = 5;
     };
     //update the canvas to put the enemy further across
-    //the screen by the rate * dt * this.speed factor;
+    //the screen by the rate * dt * speed factor;
     //put the enemy back at the starting position with a 
     //new speed factor if it's reached the end of the screen
-    if (this.x >= enemyFinish) {
+    if (this.x >= this.enemyFinish) {
         this.x = gameData.enemyXStart;
         this.speed = Math.random();
     } else {
-        this.x += (rate * dt * this.speed);
+        this.x += (this.rate * dt * this.speed);
     };
 };
 
-// Draw the enemy on the screen, required method for game
-Enemy.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
-
 //The function for our hero 
-var player = function() {
-    //Player start coordinates
-    this.playerXStart = 200;
-    this.playerYStart = 400;
-
+var Player = function(x,y) {
+    Character.call(this,x,y);
+    
     //Set the starting x and y coordinates
-    this.x = this.playerXStart;
-    this.y = this.playerYStart;
+    this.x = x;
+    this.y = y;
+    playerStartX = x;
+    playerStartY = y;
 
-    //set the image to be used for player
+    // Set the image to be used for player
     this.sprite = 'images/char-boy.png';
+
+    // Set the number of pixels equal to a step
+    this.stepSize = 20;
+
+    // Set the collision distance pixels
+    this.bugBodyDistance = 60;
+
+    // Set the variable for the goal y coordinate
+    this.winner = 0;
+
+    // Player lives remaining
+    this.lives = 5;
+
+    // Set the border pixels
+    this.rightBorder = 425
+    this.leftBorder = -25
+    this.bottomBorder = 425
 };
+
+Player.prototype = Object.create(Character.prototype);
+Player.prototype.constructor = Player;
 
 //Update function for player, a required method for engine.js
-player.prototype.update = function() {
-    //Set the variables for the canvas border coordinates
-    var rightBorder = 425;
-    var leftBorder = -25;
-    var bottomBorder = 425;
-
-    //Set the variable for collision ranges 
-    var enemyDistance = 25;
-    var bugBodyDistance = 60;
-
-    //Set the variable for the goal y coordinate for the player
-    var winner = 0;
-
+Player.prototype.update = function() {
     //if the player is at the winning y coordinate, move it back
     //to the start TODO other winning events
-    if (this.y <= winner) {
-        this.x = player.playerXStart;
-        this.y = player.playerYStart;
+    if (this.y <= this.winner) {
+        this.x = playerStartX;
+        this.y = playerStartY;
         gameData.gameWon = true;
-        gameData.gameLevel ++;
+        this.level ++;
+        gameData.winnerMessageDisplay = true;
+        
     //If the game is not a winner, check if the player has fewer 
     //than 0 lives. If so, set the player to start, set level to 1 
-    } else if (gameData.gameLives < 0) {
-        gameData.gameLevel = 1;
-        this.x = player.playerXStart;
-        this.y = player.playerYStart;
+    } else if (this.lives < 0) {
+        this.level = 1;
+        this.x = playerStartX;
+        this.y = playerStartY;
     //If the player is not at the winning y coordinate, check
     //if the player is at one of the borders and do not let 
     //it move beyond them
-    } else if (this.x < leftBorder) {
-        this.x = leftBorder;
-    } else if (this.x > rightBorder) {
-        this.x = rightBorder;
-    } else if (this.y > bottomBorder) {
-        this.y = bottomBorder;
+    } else if (this.x < this.leftBorder) {
+        this.x = this.leftBorder;
+    } else if (this.x > this.rightBorder) {
+        this.x = this.rightBorder;
+    } else if (this.y > this.bottomBorder) {
+        this.y = this.bottomBorder;
     } else {
         gameData.gameWon = false;
     };
@@ -121,52 +143,41 @@ player.prototype.update = function() {
     //specified ranges of one of the enemies, set the player
     //x and y coordinates to the starting position
     for (i = 0; i < allEnemies.length; i++) {
-        if (player.x > allEnemies[i].x - bugBodyDistance && 
-            player.x < allEnemies[i].x + bugBodyDistance &&
-            player.y > allEnemies[i].y - enemyDistance &&
-            player.y < allEnemies[i].y + enemyDistance) {
-            player.x = player.playerXStart;
-            player.y = player.playerYStart;
-            gameData.gameLives -= 1;
+        if (player.x > allEnemies[i].x - this.bugBodyDistance &&
+            player.x < allEnemies[i].x + this.bugBodyDistance &&
+            player.y > allEnemies[i].y - this.bugBodyDistance &&
+            player.y < allEnemies[i].y + this.bugBodyDistance) {
+            player.x = playerStartX;
+            player.y = playerStartY;
+            this.lives -= 1;
         };
     };
 };
 
-//render function to draw the player on the canvas
-player.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
-
 //handleInput function to take values passed from allowedKeys object
-player.prototype.handleInput = function(key) {
-    var stepSize = 20;
+Player.prototype.handleInput = function(key) {
     switch (key) {
         case 'up':
-            this.y -= stepSize;
+            this.y -= this.stepSize;
             break;
         case 'down':
-            this.y += stepSize;
+            this.y += this.stepSize;
             break;
         case 'left':
-            this.x -= stepSize;
+            this.x -= this.stepSize;
             break;
         case 'right':
-            this.x += stepSize;
+            this.x += this.stepSize;
             break;
-    }
+    };
 };
 
 //Create the allEnemies array to hold enemy objects
 var allEnemies = [];
 
-
-//Create the Enemies object to store globally available
-//data on enemies
-var Enemies = {};
-
-//Spanw function adds enemies to allEnemies array in
-//an amount corresponding to the number supplied
-gameData.spawn = function(num) { 
+// Spawn function adds enemies to allEnemies array in
+// An amount corresponding to the number supplied
+Enemy.prototype.spawn = function(num) {
     for (i = 0;i < num; i++) {
         //Sets the starting coordinates for the enemy, with y values
         //coresponding to the Enemies.rows object, based upon the
@@ -186,10 +197,6 @@ gameData.spawn = function(num) {
 };
 
 //Call the enemies.spawn function to populate the allEnemies array
-gameData.spawn(gameData.gameLevel * 5);
-
-//Place the player object in a variable called player
-var player = new player();
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
@@ -206,18 +213,41 @@ document.addEventListener('keyup', function(e) {
 
 //Create HUD object, this contains the text to display
 //on screen showing game data
-var headsUpDisplay = {
-    "Lives":"Remaning lives: ",
-    "Points":"Score: ",
-    "Level":"Level: "
+var headsUpDisplay = function() {
+    this.livesBegin = "Remaning lives: "
+    this.points = "Score: "
+    this.levelBegin = "Level: "
+    this.winnerMessage = "WINNER!!"
+    this.levelMessageEnd = "Begin!"
+    this.messageCounter = 100
+    this.winnerMessageDisplay = false
+    this.levelMessageDisplay = false
 };
 
-headsUpDisplay.render = function() {
-    ctx.fillText(headsUpDisplay.Lives + gameData.gameLives, 325, 80);
+// Function to render the game details
+headsUpDisplay.prototype.render = function() {
     ctx.font = "bold 20px Quicksand";
     ctx.fillStyle = "yellow";
-    ctx.fillText(headsUpDisplay.Level + gameData.gameLevel, 5, 80);
-    ctx.font = "bold 20px Quicksand";
-    ctx.fillStyle = "yellow";
+    ctx.fillText(this.livesBegin + player.lives, 325, 80);
+    ctx.fillText(this.levelBegin + player.level, 5, 80);
+
+    if (this.messageCounter === 0) {
+        this.winnerMessageDisplay = false;
+        this.messageCounter = 50;
+    };
+
+    if (this.winnerMessageDisplay) {
+        ctx.font = "bold 50px Quicksand";
+        ctx.fillStyle = "blue";
+        ctx.fillText(this.winnerMessage, 150, 300);
+        this.messageCounter -= 1;
+    };
 };
 
+//Instantiate the Heads Up Display, player and enemy 
+var enemy = new Enemy();
+var HUD = new headsUpDisplay();
+var player = new Player(200,400);
+
+//Spawn enemies TODO fix spawn function
+enemy.spawn(enemy.level * 5);
