@@ -3,7 +3,8 @@ gameData = {
     "gameWon": false,
     "level": 1,
     "lives": 5,
-    "gameFreeze": false
+    "gameFreeze": false,
+    "gameCounter": 0
 };
 
 // Create Character class
@@ -59,9 +60,7 @@ Enemy.prototype.update = function(dt) {
     };
     if (gameData.lives < 0) {
         allEnemies = [];
-        gameData.level = 1;
         enemy.spawn(gameData.level * 5);
-        gameData.lives = 5;
     };
     //update the canvas to put the enemy further across
     //the screen by the rate * dt * speed factor;
@@ -164,7 +163,7 @@ Player.prototype.update = function() {
             player.y < allEnemies[i].y + this.bugBodyDistance) {
             player.x = playerStartX;
             player.y = playerStartY;
-            gameData.lives -= 1;
+            gameData.lives --;
         };
     };
 };
@@ -208,48 +207,106 @@ document.addEventListener('keyup', function(e) {
 //Create HUD object, this contains the text to display
 //on screen showing game data
 var headsUpDisplay = function() {
-    this.livesBegin = "Remaning lives: "
-    this.points = "Score: "
-    this.levelBegin = "Level: "
-    this.winnerMessage = "WINNER!!"
-    this.levelMessageEnd = "Begin!"
-    this.messageCounter = 100
-    this.winnerMessageDisplay = false
-    this.levelMessageDisplay = false
+    this.livesBegin = "Remaning lives: ";
+    this.points = "Score: ";
+    this.levelBegin = "Level ";
+    this.winnerMessage = "WINNER!!";
+    this.levelMessageEnd = "Begin!";
+    this.gameOver = "Game Over :(";
+    this.gameOverDisplay = false;
+    this.messageCounter = 100;
+    this.winnerMessageDisplay = false;
+    this.levelMessageDisplay = false;
+    this.levelMessageCounter = 100;
+    this.gameOverCounter = 100;
 };
 
+
+headsUpDisplay.prototype.renderHelper = function(message,condition,x,y,size,color) {
+    if (condition) {
+    ctx.font = "bold "+ size + " Quicksand";
+    ctx.fillStyle = color;
+    ctx.textAlign = "center";
+    ctx.fillText(message, x, y);
+    };
+};
 // Function to render the game details
 headsUpDisplay.prototype.render = function() {
-    ctx.font = "bold 20px Quicksand";
-    ctx.fillStyle = "yellow";
-    ctx.fillText(this.livesBegin + gameData.lives, 325, 80);
-    ctx.fillText(this.levelBegin + gameData.level, 5, 80);
 
-    if (this.winnerMessageDisplay) {
-        ctx.font = "bold 50px Quicksand";
-        ctx.fillStyle = "blue";
-        ctx.fillText(this.winnerMessage, 150, 300);
-    };
+    HUD.renderHelper(this.levelBegin + 
+        gameData.level,true,40,80,"20px","yellow");
+
+    HUD.renderHelper(this.livesBegin + 
+        gameData.lives,true,410,80,"20px","yellow");
+
+    HUD.renderHelper(this.winnerMessage,this.winnerMessageDisplay,
+        210,300,"50px","blue");
+
+    HUD.renderHelper(this.levelBegin + gameData.level + this.levelMessageEnd,
+        this.levelMessageDisplay, 210,300,"50px","green");
+
+    HUD.renderHelper(this.gameOver,this.gameOverDisplay, 
+        210,300,"50px","green");
+
 };
 
 headsUpDisplay.prototype.update = function() {
+    // When a player beats the level, set the message display to true
     if (gameData.gameWon) {
         this.winnerMessageDisplay = true;
     };
 
+    // When the message display is true, start the counter, freeze screen
     if (this.winnerMessageDisplay) {
         this.messageCounter --;
+        gameData.gameFreeze = true;
     };
 
+    // If message counter is done, unfreeze, winner off, level display on
     if (this.messageCounter === 0) {
         this.winnerMessageDisplay = false;
-        this.messageCounter = 50;
+        this.messageCounter = 100;
+        gameData.gameFreeze = false;
+        this.levelMessageDisplay = true;
     };
+
+    //When the level info display is on, start level counter
+    if (this.levelMessageDisplay) {
+        this.levelMessageCounter --;
+    };
+
+    //WHen level counter hits zero, turn level display off
+    if (this.levelMessageCounter === 0) {
+        this.levelMessageDisplay = false;
+        this.levelMessageCounter = 100;
+    };
+
+    //Turn on gameOver message when lives are at zero
+    if (gameData.lives === 0) {
+        this.gameOverDisplay = true
+    };
+
+    if (this.gameOverDisplay) {
+        this.gameOverCounter --;
+        gameData.gameFreeze = true;
+    };
+
+    if (this.gameOverCounter === 0) {
+        this.gameOverDisplay = false;
+        this.gameOverCounter = 100;
+        gameData.lives = 5;
+        gameData.gameFreeze = false;
+        gameData.level = 1;
+    };
+
+    //If 
 };
+
 //Create allEnemies array; instantiate the Heads Up Display, player and enemy 
 var allEnemies = [];
 var enemy = new Enemy();
 var HUD = new headsUpDisplay();
 var player = new Player(200,400);
+
 //Spawn enemies
 enemy.spawn(gameData.level * 5);
