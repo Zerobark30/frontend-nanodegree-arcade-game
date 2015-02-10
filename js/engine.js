@@ -91,11 +91,14 @@ var Engine = (function(global) {
      * render methods.
      */
     function updateEntities(dt) {
-        allEnemies.forEach(function(enemy) {
-            enemy.update(dt);
-        });
-        player.update();
-    }
+        if(gameData.gameFreeze === false) {
+            allEnemies.forEach(function(enemy) {
+                enemy.update(dt);
+            });
+            player.update();
+            HUD.update();
+        };
+    };
 
     /* This function initially draws the "game level", it will then call
      * the renderEntities function. Remember, this function is called every
