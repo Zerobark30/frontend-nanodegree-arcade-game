@@ -4,7 +4,10 @@ gameData = {
     "level": 1,
     "lives": 5,
     "gameFreeze": false,
-    "gameCounter": 0
+    "gameCounter": 0,
+    "startScreenDisplay": true,
+    "hardness": 1,
+    "gameStart": false
 };
 
 // Create Character class
@@ -52,15 +55,9 @@ Enemy.prototype.constructor = Enemy;
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
-    //check to see if gameWon is true or gameLevel is below
-    //zero. If so, respawn more enemies by a factor of the new level
-    if (gameData.gameWon === true) {
-        allEnemies = [];
-        enemy.spawn(gameData.level * 5);
-    };
-    if (gameData.lives < 0) {
-        allEnemies = [];
-        enemy.spawn(gameData.level * 5);
+    // If player level is won, lives under 0 or game just started, spawn
+    if (gameData.gameWon || gameData.lives < 0 || gameData.gameStart) {
+        enemy.spawn();
     };
     //update the canvas to put the enemy further across
     //the screen by the rate * dt * speed factor;
@@ -77,7 +74,8 @@ Enemy.prototype.update = function(dt) {
 // Spawn function adds enemies to allEnemies array in
 // An amount corresponding to the number supplied
 Enemy.prototype.spawn = function(num) {
-    for (i = 0;i < num; i++) {
+    allEnemies = [];
+    for (i = 0; i < 5 * gameData.hardness * gameData.level; i++) {
         //Sets the starting coordinates for the enemy, with y values
         //coresponding to the Enemies.rows object, based upon the
         //divisibility of the index
@@ -93,6 +91,7 @@ Enemy.prototype.spawn = function(num) {
                 break;
         }; 
     };
+    gameData.gameStart = false;
 };
 
 //The function for our hero 
@@ -170,7 +169,7 @@ Player.prototype.update = function() {
 
 //handleInput function to take values passed from allowedKeys object
 Player.prototype.handleInput = function(key) {
-    if (gameData.gameFreeze === false) {
+    if (gameData.gameFreeze === false && gameData.startScreenDisplay === false) {
         switch (key) {
             case 'up':
                 this.y -= this.stepSize;
@@ -198,10 +197,12 @@ document.addEventListener('keyup', function(e) {
         37: 'left',
         38: 'up',
         39: 'right',
-        40: 'down'
+        40: 'down',
+        13: 'enter'
     };
 
     player.handleInput(allowedKeys[e.keyCode]);
+    HUD.handleInput(allowedKeys[e.keyCode])
 });
 
 //Create HUD object, this contains the text to display
@@ -219,6 +220,13 @@ var headsUpDisplay = function() {
     this.levelMessageDisplay = false;
     this.levelMessageCounter = 100;
     this.gameOverCounter = 100;
+    this.startScreen0 = "Welcome to bugger!";
+    this.startScreen1 = "Please choose difficulty level";
+    this.startScreen2 = "Easy";
+    this.startScreen3 = "Hard";
+    this.startScreen4 = "When you're ready, press Enter!";
+    this.hardSelectE = "yellow";
+    this.hardSelectH = "green";
 };
 
 
@@ -234,10 +242,12 @@ headsUpDisplay.prototype.renderHelper = function(message,condition,x,y,size,colo
 headsUpDisplay.prototype.render = function() {
 
     HUD.renderHelper(this.levelBegin + 
-        gameData.level,true,40,80,"20px","yellow");
+        gameData.level,gameData.startScreenDisplay === false,40,80,
+        "20px","yellow");
 
     HUD.renderHelper(this.livesBegin + 
-        gameData.lives,true,410,80,"20px","yellow");
+        gameData.lives,gameData.startScreenDisplay === false,410,80,
+        "20px","yellow");
 
     HUD.renderHelper(this.winnerMessage,this.winnerMessageDisplay,
         210,300,"50px","blue");
@@ -246,11 +256,50 @@ headsUpDisplay.prototype.render = function() {
         this.levelMessageDisplay, 210,300,"50px","green");
 
     HUD.renderHelper(this.gameOver,this.gameOverDisplay, 
-        210,300,"50px","green");
+        250,300,"50px","green");
 
+    HUD.renderHelper(this.startScreen0,gameData.startScreenDisplay, 
+        250,200,"45px","green");
+
+    HUD.renderHelper(this.startScreen1,gameData.startScreenDisplay, 
+        250,250,"25px","green");
+
+    HUD.renderHelper(this.startScreen2,gameData.startScreenDisplay, 
+        250,275,"20px",this.hardSelectE);
+
+    HUD.renderHelper(this.startScreen3,gameData.startScreenDisplay, 
+        250,300,"20px",this.hardSelectH);
+
+    HUD.renderHelper(this.startScreen4,gameData.startScreenDisplay, 
+        250,350,"30px","green");
+};
+
+headsUpDisplay.prototype.handleInput = function(key) {
+    if(gameData.startScreenDisplay === true) {
+         switch (key) {
+            case 'up':;
+                gameData.hardness = 1;
+                this.hardSelectE = "yellow";
+                this.hardSelectH = "green"; 
+                break;
+            case 'down':
+                gameData.hardness = 2;
+                this.hardSelectE = "green";
+                this.hardSelectH = "yellow";
+                break;
+            case 'enter':
+                gameData.startScreenDisplay = false;
+                this.gameOverCounter = 100;
+                gameData.lives = 5;
+                gameData.level = 1;
+                gameData.gameStart = true;
+                break;
+        };
+    };
 };
 
 headsUpDisplay.prototype.update = function() {
+
     // When a player beats the level, set the message display to true
     if (gameData.gameWon) {
         this.winnerMessageDisplay = true;
@@ -291,22 +340,20 @@ headsUpDisplay.prototype.update = function() {
         gameData.gameFreeze = true;
     };
 
-    if (this.gameOverCounter === 0) {
+    if (this.gameOverCounter <= 0) {
         this.gameOverDisplay = false;
-        this.gameOverCounter = 100;
-        gameData.lives = 5;
+        gameData.startScreenDisplay = true;
         gameData.gameFreeze = false;
-        gameData.level = 1;
     };
 
     //If 
 };
 
 //Create allEnemies array; instantiate the Heads Up Display, player and enemy 
+var HUD = new headsUpDisplay();
 var allEnemies = [];
 var enemy = new Enemy();
-var HUD = new headsUpDisplay();
 var player = new Player(200,400);
 
 //Spawn enemies
-enemy.spawn(gameData.level * 5);
+enemy.spawn();
