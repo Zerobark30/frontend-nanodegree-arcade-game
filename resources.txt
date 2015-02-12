@@ -1,3 +1,18 @@
 
 Used to add enemies to allEnemies with a for loop:
 http://stackoverflow.com/questions/8260156/how-do-i-create-dynamic-variable-names-inside-a-loop
+
+Used to get number of enter key for event listener
+http://www.cambiaresearch.com/articles/15/javascript-char-codes-key-codes
+
+Used for general background on js methods and standards
+http://www.w3schools.com/js
+
+Used for general background on js methods and standards
+https://developer.mozilla.org/en-US/docs/Web/JavaScript
+
+Used to get a grasp on OO-JS
+https://www.udacity.com/course/viewer#!/c-ud015-nd
+
+Used to get a grasp on HTML5 canvas
+https://www.udacity.com/course/viewer#!/c-ud292-nd/l-3163218691/e-3169968815/m-3169968818
